@@ -1,141 +1,115 @@
-// @flow
-import React from "react"
+/* eslint-disable react/forbid-prop-types */
+import React, { Component } from "react"
+import PropTypes from "prop-types"
+import { connect } from "react-redux"
+
 import MovieView from "../components/Movie"
-import { omdbApi } from "../API"
+import Loader from "../components/common/Loader"
+import { Flex } from "../components/Layout"
 
-type IdType = string
+import { actionsSingleMoviePage } from "../store"
 
-type PropsType = {
-  match: {
-    params: {
-      id: string
-    }
-  }
-}
-
-type StateType = {
-  info: {
-    Title?: string,
-    Runtime?: string,
-    Genre?: string,
-    Plot?: string,
-    Rated?: string,
-    Poster?: string,
-    Director?: string,
-    Actors?: string,
-    Year?: string,
-    Ratings?: Array<{ Source: string, Value: string }>
-  },
-  fav: boolean,
-  favourites: Array<string>,
-  loading: boolean
-}
-
-type PrevPropsType = {
-  match: {
-    params: {
-      id: string
-    }
-  }
-}
-
-type PrevStateType = {
-  fav: boolean,
-  favourites: Array<string>,
-  loading: boolean
-}
-
-type FavType = string
-
-class MoviePage extends React.Component<PropsType, StateType> {
-  state = {
-    info: {},
-    fav: false,
-    favourites: [],
-    loading: false
-  }
-
-  componentDidMount() {
+class MoviePage extends Component {
+  async componentDidMount() {
     const {
       match: {
         params: { id }
       }
     } = this.props
 
-    this.setState({
-      favourites: this.getFavourites()
-    })
-
-    this.loadMovies(id)
+    await this.props.onGetFavorites()
+    await this.props.onGetSingleMovie(id)
   }
 
-  componentDidUpdate(prevProps: PrevPropsType, prevState: PrevStateType) {
-    const { favourites } = this.state
-    localStorage.setItem("favourites", JSON.stringify(favourites))
-
-    if (prevState.favourites !== favourites) {
-      this.setState({ fav: this.getIsFavourite() })
-    }
+  componentDidUpdate() {
+    const { favorites } = this.props
+    localStorage.setItem("favorites", JSON.stringify(favorites))
   }
 
-  loadMovies = async (id: IdType) => {
-    this.setState({ loading: true })
-
-    const url = `${omdbApi.BASE_URL}${omdbApi.API_KEY}&i=${id}`
-    const res = await fetch(url)
-    const data = await res.json()
-    this.setState({ loading: false, info: data || {} })
-  }
-
-  getFavourites = () => {
-    const storage = localStorage.getItem("favourites")
-    return storage ? JSON.parse(storage) : []
-  }
-
-  getIsFavourite = () => {
+  getIsFavorite = () => {
     const {
       match: {
         params: { id }
-      }
+      },
+      favorites
     } = this.props
 
-    const { favourites } = this.state
-
-    return favourites.filter((fav: FavType) => fav === id).length > 0
+    return favorites.filter(fav => fav === id).length > 0
   }
 
-  toggleFavourite = () => {
+  toggleFavorite = () => {
     const {
       match: {
         params: { id }
-      }
+      },
+      favorites
     } = this.props
 
-    const { favourites } = this.state
-    const isFavourite = this.getIsFavourite()
+    const isFavorite = this.getIsFavorite()
 
-    const newFavs = isFavourite
-      ? favourites.filter((fav: FavType) => fav !== id)
-      : [...favourites, id]
+    const newFavs = isFavorite
+      ? favorites.filter(fav => fav !== id)
+      : [...favorites, id]
 
-    this.setState({ favourites: newFavs })
+    this.props.onToggleFavorite(newFavs)
   }
 
   render() {
-    const { info } = this.state
-    const { fav } = this.state
-    const { loading } = this.state
-
+    const { info, favorite, loading } = this.props
     return (
-      <MovieView
-        getIsFavourite={this.getIsFavourite}
-        toggleFavourite={this.toggleFavourite}
-        info={info}
-        favourite={fav}
-        loading={loading}
-      />
+      <Flex>
+        {loading ? (
+          <Loader />
+        ) : (
+          <MovieView
+            getIsFavorite={this.getIsFavorite}
+            toggleFavorite={this.toggleFavorite}
+            info={info}
+            favorite={favorite}
+            loading={loading}
+          />
+        )}
+      </Flex>
     )
   }
 }
 
-export default MoviePage
+function mapStateToProps(state) {
+  return {
+    id: state.moviePage.id,
+    info: state.moviePage.info,
+    favorite: state.moviePage.favorite,
+    favorites: state.moviePage.favorites,
+    loading: state.moviePage.loading
+  }
+}
+
+function mapDispatchToProps(dispatch) {
+  return {
+    onGetSingleMovie(id) {
+      dispatch(actionsSingleMoviePage.getSingleMovie(id))
+    },
+    onGetFavorites() {
+      dispatch(actionsSingleMoviePage.getFavorites())
+    },
+    onToggleFavorite() {
+      dispatch(actionsSingleMoviePage.toggleFavorite())
+    }
+  }
+}
+
+MoviePage.propTypes = {
+  match: PropTypes.object.isRequired,
+  loading: PropTypes.bool.isRequired,
+  favorite: PropTypes.bool.isRequired,
+  info: PropTypes.object.isRequired,
+  favorites: PropTypes.array.isRequired,
+  onGetSingleMovie: PropTypes.func.isRequired,
+  onToggleFavorite: PropTypes.func.isRequired,
+  onGetFavorites: PropTypes.func.isRequired
+}
+
+export default connect(
+  mapStateToProps,
+  mapDispatchToProps
+)(MoviePage)

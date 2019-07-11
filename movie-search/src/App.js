@@ -1,47 +1,21 @@
-import React, { Component } from "react"
-import { connect } from "react-redux"
+import React from "react"
+import { BrowserRouter } from "react-router-dom"
 
-import { actions } from "./store"
-import Provider from "./components/Provider"
+import Theme from "./components/Theme"
 import Routes from "./components/Routes"
+import Header from "./components/Header"
+import Footer from "./components/Footer"
 
-class App extends Component {
-  formSubmitted(event) {
-    this.props.onGetMovies(this.props.searchTerm)
-    event.preventDefault()
-  }
-
-  render() {
-    return (
+const App = () => (
+  <BrowserRouter>
+    <Theme>
       <React.Fragment>
-        <Provider>
-          <Routes />
-        </Provider>
+        <Header />
+        <Routes />
+        <Footer />
       </React.Fragment>
-    )
-  }
-}
+    </Theme>
+  </BrowserRouter>
+)
 
-function mapStateToProps(state) {
-  return {
-    searchTerm: state.searchTerm,
-    loading: state.loading,
-    movies: state.movies
-  }
-}
-
-function mapDispatchToProps(dispatch) {
-  return {
-    onSearchTermChanged(searchTerm) {
-      dispatch(actions.searchTermChanged(searchTerm))
-    },
-    onGetMovies(searchTerm) {
-      dispatch(actions.getMovies(searchTerm))
-    }
-  }
-}
-
-export default connect(
-  mapStateToProps,
-  mapDispatchToProps
-)(App)
+export default App

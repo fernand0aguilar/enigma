@@ -1,14 +1,12 @@
-import { search } from "./API"
+import { searchMovies, searchSingleMovie, getFavorites } from "./API"
 
 const SEARCH_TERM_CHANGED = "SEARCH_TERM_CHANGED"
+const MOVIES = "MOVIES"
+const SINGLE_MOVIE = "SINGLE_MOVIE"
+const FAVORITES = "FAVORITES"
+const TOGGLE_FAVORITE = "TOGGLE_FAVORITE"
 
-const initialState = {
-  searchTerm: "",
-  results: [],
-  loading: false
-}
-
-export const actions = {
+export const actionsMainPage = {
   searchTermChanged(searchTerm) {
     return {
       type: SEARCH_TERM_CHANGED,
@@ -17,35 +15,29 @@ export const actions = {
   },
   getMovies(searchTerm) {
     return {
-      type: "Movies",
-      payload: search(searchTerm)
+      type: MOVIES,
+      payload: searchMovies(searchTerm)
     }
   }
 }
-
-export function reducer(state = initialState, action) {
-  switch (action.type) {
-    case SEARCH_TERM_CHANGED: {
-      return {
-        ...state,
-        searchTerm: action.searchTerm
-      }
+export const actionsSingleMoviePage = {
+  getSingleMovie(id) {
+    return {
+      type: SINGLE_MOVIE,
+      payload: searchSingleMovie(id)
     }
-    case "MOVIES_PENDING": {
-      return {
-        ...state,
-        results: [],
-        loading: true
-      }
+  },
+  getFavorites() {
+    return {
+      type: FAVORITES,
+      payload: getFavorites()
     }
-    case "MOVIES_FULFILLED": {
-      return {
-        ...state,
-        results: action.payload,
-        loading: false
-      }
+  },
+  toggleFavorite() {
+    return {
+      type: TOGGLE_FAVORITE,
+      favorite: true,
+      payload: getFavorites()
     }
-    default:
-      return state
   }
 }
